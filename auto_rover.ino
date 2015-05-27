@@ -24,16 +24,16 @@ void stop(void)                    //Stop
 void advance(char a,char b)          //Move forward
 {
   analogWrite (E1,a);      //PWM Speed Control
-  digitalWrite(M1,HIGH);    
+  digitalWrite(M1,LOW);    
   analogWrite (E2,b);    
-  digitalWrite(M2,LOW);
+  digitalWrite(M2,HIGH);
 }  
 void back_off (char a,char b)          //Move backward
 {
   analogWrite (E1,a);      //PWM Speed Control
-  digitalWrite(M1,LOW);    
+  digitalWrite(M1,HIGH);    
   analogWrite (E2,b);    
-  digitalWrite(M2,HIGH);
+  digitalWrite(M2,LOW);
 }
 void turn_L (char a,char b)             //Turn Left
 {
@@ -73,10 +73,10 @@ void controlRover(char val) {
       switch(val)
       {
       case 'w'://Move Forward
-        advance (255,255);   //move forward in max speed
+        advance (200,200);   //move forward in max speed
         break;
       case 's'://Move Backward
-        back_off (255,255);   //move back in max speed
+        back_off (200,200);   //move back in max speed
         break;
       case 'a'://Turn Left
         turn_L (255,255);
@@ -111,6 +111,7 @@ void ledBlink(int led,int sensor, int cycles) {
 }
 
 void loop(void) { 
+  int active = 0;
   for(int i = 1;i<= 500000;i++) {
  
     sensorRVal = sensorVal(sensorR);
@@ -121,24 +122,29 @@ void loop(void) {
 
     ledBlink(ledR,sensorRVal,i);
     ledBlink(ledL,sensorLVal,i);
-    
-    if (sensorRVal >= 400 or sensorRVal <= -300 && sensorLVal >= 400 or sensorRVal <= - 300) {
-       controlRover('a');
-       continue;
+    if (active == 0) {
+      if (sensorRVal >= 400 or sensorRVal <= -300 && sensorLVal >= 400 or sensorRVal <= - 300) {
+         controlRover('a');
+         active++;
+      }
+      
+      else if (sensorRVal >= 400 or sensorRVal <= -300 && sensorLVal >= 120) {
+         controlRover('a');
+         active++;
+      }
+      
+      else if (sensorLVal >= 400 or sensorLVal <= -300 && sensorRVal >= 120) {
+         controlRover('d');
+         active++;
+      }
     }
-    
-    if (sensorRVal >= 400 or sensorRVal <= -300 && sensorLVal >= 120) {
-       controlRover('a');
-       continue;
-    }
-    
-    if (sensorLVal >= 400 or sensorLVal <= -300 && sensorRVal >= 120) {
-       controlRover('d');
-       continue;
-    }
-     if (i % 10 == 0)
-        controlRover('w');
-        
+     else {
+        active++;
+        if(active == 5) {
+          controlRover('w');
+          active = 0;
+        }
+     }
      delay(interval);
   }
 }
